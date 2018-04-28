@@ -1,0 +1,28 @@
+body {
+
+  background: #fcfcfa;
+  color: #333;
+
+  font-family: "PT Serif", serif;
+  margin: 1em 10% 4em 10%;
+
+  position: relative;
+}
+
+a:not(:hover) {
+  text-decoration: none;
+}
+
+/** Inline header elements and delimit w/ slashes. */
+header a, header p {
+  display: inline;
+  font-size: 0.8em;
+}
+header *::after{
+  content: "/";
+  margin-left: 0.6em;
+  margin-right: 0.4em;
+}
+header :last-child::after{
+  content: "";
+}
