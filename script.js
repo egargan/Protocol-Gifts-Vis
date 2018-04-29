@@ -1,89 +1,72 @@
 
-/* ---- Sample D3 script, not related to project! ---- */
-
-var dataset = []
-
-for (var i = 0; i < 10; i++) {
-   dataset.push([Math.random() * 200, Math.random() * 200]);
-}
-
-//Width and height
-var w = 700;
-var h = 400;
-var pad = 40
-
-d3.max(dataset, function(d) {    //Returns 480
-    return d[0];  //References first value in each sub-array
-});
-
-var xscale = d3.scaleLinear()
-                    .domain([
-                      d3.min(dataset, function(d) {
-                        return d[0];
-                      }), d3.max(dataset, function(d) {
-                        return d[0];
-                      })
-                     ])
-                    .range([pad, w - pad])
-                    .nice();
-
-var yscale = d3.scaleLinear()
-                    .domain([
-                      d3.min(dataset, function(d) {
-                        return d[1];
-                      }), d3.max(dataset, function(d) {
-                        return d[1];
-                      })
-                     ])
-                    .range([h - pad, pad]);
-
-  var rscale = d3.scaleLinear()
-                       .domain([0, d3.max(dataset, function(d) { return d[1]; })])
-                       .range([2, 10]);
 
 
+var dataset = [];
 
 
-// doc.onload is called when DOM is ready -- we can only manipulate it once
+// window.onload is called when DOM is ready -- we can only manipulate it once
 // it's ready, so any d3 dom functions must go in here.
 window.onload = function () {
 
+  // Look at parallelising window.onload and csv load, i.e. ready() is called
+  // when both are done
+  d3.csv("gifts_clean.csv", function(d) {
+    return {
+       rec: d["Receiver"],
+       from: d["From"],
+       //just: d["Justification"],
+       gift: d["Gift"],
+       //disp: d["Disposition"],
+       value: +d["Value_USD"],
+       date: d["Date"],
+       country: d["country"]
+    };
+  }).then(function(data) {
+    dataset = data;
+    ready();
+  });
 
+}
+
+//Width and height
+var w = 1100;
+var h = 400;
+var pad = 0;
+
+
+// called when
+function ready() {
+
+// Define domain -> range scales that map data values to visual
+  var scaley = d3.scaleLinear()
+                      .domain([
+                        0, d3.max(dataset, function(d) {
+                          return d.value;
+                        })
+                       ])
+                      .range([pad, h - pad]);
+
+  // Append svg element to #main div
   var svg = d3.select("#main").append("svg")
       .attr("height", h)
       .attr("width", w);
 
-  var points = svg.selectAll("circle")
-    .data(dataset)
-    .enter()
-    .append("circle")
-    .attr("cx", function(d) {
-      return xscale(d[0]);
-    })
-    .attr("cy", function(d) {
-      return yscale(d[1]);
-    })
-    .attr("r", function(d) {
-      return rscale(d[1]);
-    })
-    .attr("fill", "teal")
+  var bars = svg.selectAll("rect")
+      .data(dataset)
+      .enter()
+      .append("rect")
+      .attr("x", function(d, i) {
+          return i * (w / dataset.length + pad);
+      })
+      .attr("y", function(d) {
+          return h - scaley(d.value);
+      })
+      .attr("width", function(d) {
+          return w / dataset.length;
+      })
+      .attr("height", function(d) {
+          return scaley(d.value);
+      });
 
-  svg.selectAll("text")
-    .data(dataset)
-    .enter()
-    .append("text")
-    .text(function(d) {
-      return Math.round(d[0]) + ", " + Math.round(d[1]);
-    })
-    .attr("x", function(d) {
-      return xscale(d[0]);
-    })
-    .attr("y", function(d) {
-      return yscale(d[1]);
-    })
-    .attr("font-size", 10)
-    .attr("font-family", "sans-serif")
-
-
-
+  console.log(bars)
 }
