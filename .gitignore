@@ -1,4 +1,9 @@
 
-
-#ignore d3 lib
+# ignore local d3 lib
 d3
+
+# practice .js script because i am noob
+practice.js
+
+# atom's code completion project file
+.tern-project

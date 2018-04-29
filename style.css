@@ -13,6 +13,10 @@ a:not(:hover) {
   text-decoration: none;
 }
 
+header {
+  margin-bottom: 2em;
+}
+
 /** Inline header elements and delimit w/ slashes. */
 header a, header p {
   display: inline;
@@ -25,4 +29,14 @@ header *::after{
 }
 header :last-child::after{
   content: "";
+}
+
+/* SVG styles */
+svg .yaxis path,
+svg .yaxis line,
+svg .xaxis path,
+svg .xaxis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: optimizeSpeed;
 }
