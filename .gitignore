@@ -7,3 +7,6 @@ practice.js
 
 # atom's code completion project file
 .tern-project
+
+# mac's weird folder metadata file
+.DS_Store
