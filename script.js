@@ -28,16 +28,19 @@ window.onload = function () {
 
 }
 
-//Width and height
-var w = 1100;
+// Default width, will be computed in ready()
+var w = 700;
+
 var h = 400;
 var pad = 0;
 
-
-// called when
+// Will only be called when dom is ready, i.e. after window.onload()
 function ready() {
 
-// Define domain -> range scales that map data values to visual
+  // Get main's computed width
+  w = d3.select("#main").node().getBoundingClientRect().width;
+
+  // Definex domain -> range scales that map data values to visual
   var scaley = d3.scaleLinear()
                       .domain([
                         0, d3.max(dataset, function(d) {
