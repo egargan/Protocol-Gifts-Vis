@@ -34,7 +34,8 @@ var h = 400;
 var pad = 1;
 
 /** Height of the horizontal country gift count bar. */
-var cBarHeight = 40;
+var countryBarHeight = 40;
+var recvBarHeight = 25;
 
 // Chart scales
 var scaleCountryCount, scaleRecvCount;
@@ -88,11 +89,11 @@ function drawCountriesBar() {
            tot += scaleCountryCount(d.value + pad);
            return temp;
         })
-        .attr("y", h - cBarHeight)
+        .attr("y", h - countryBarHeight)
         .attr("width", function(d) {
             return scaleCountryCount(d.value);
         })
-        .attr("height", cBarHeight);
+        .attr("height", countryBarHeight);
 
 }
 
@@ -122,11 +123,11 @@ function drawRecvBar() {
              tot += scaleRecvCount(d.value + pad);
              return temp;
           })
-          .attr("y", cBarHeight)
+          .attr("y", 40)
           .attr("width", function(d) {
               return scaleRecvCount(d.value);
           })
-          .attr("height", cBarHeight);
+          .attr("height", recvBarHeight);
 
    // TODO: could probably calculate this before bars being generated, then apply offset to x
    rbars.attr("transform", "translate(" + ((tot - pad) / 2) + ", 0)");
