@@ -31,6 +31,11 @@ header :last-child::after{
   content: "";
 }
 
+/* Main visualisation SVG */
+svg#vis {
+  margin: 1em 0 2em ;
+}
+
 /* SVG styles */
 svg .yaxis path,
 svg .yaxis line,
@@ -39,4 +44,13 @@ svg .xaxis line {
     fill: none;
     stroke: black;
     shape-rendering: optimizeSpeed;
+}
+
+
+svg .countryBars {
+  /* shape-rendering: optimizeSpeed; */
+}
+
+svg .recvBars {
+  /* shape-rendering: optimizeSpeed; */
 }
