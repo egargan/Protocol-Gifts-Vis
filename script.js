@@ -29,8 +29,8 @@ window.onload = function () {
 }
 
 // Default width, will be computed in ready()
-var w = 700;
-var h = 400;
+//var w = 700;
+var h = 500;
 var pad = 1;
 
 /** Height of the horizontal country gift count bar. */
@@ -40,7 +40,7 @@ var recvBarHeight = 25;
 // Chart scales
 var scaleCountryCount, scaleRecvCount;
 
-var visSvg;
+var svg;
 
 /** Width of visualisation SVG. */
 var visW;
@@ -53,14 +53,17 @@ function ready() {
   visW = d3.select("#main").node().getBoundingClientRect().width;
 
   // Append svg element to #main div
-  visSvg = d3.select("#main").append("svg")
+  svg = d3.select("#main").append("svg")
       .attr("height", h)
       .attr("width", visW)
       .attr("id", "vis")
 
-  drawCountriesBar();
+  countReceivers();
 
-  drawRecvBar();
+  setupOverview();
+
+  // drawCountriesBar();
+  // drawRecvBar();
 }
 
 /** Creates SVGs for horiztonal stacked bar chart visualising the number of
@@ -77,7 +80,7 @@ function drawCountriesBar() {
   let tot = 0;
   let temp = 0;
 
-  var cbars = visSvg.append("g")
+  var cbars = svg.append("g")
         .attr("id", "groupCountryBars")
         .selectAll("rect")
         .data(countryCount.entries())
@@ -110,7 +113,7 @@ function drawRecvBar() {
    let tot = 0;
    let temp = 0;
 
-   var rbars = visSvg.append("g")
+   var rbars = svg.append("g")
           .attr("id", "groupRecvBars");
 
    rbars.selectAll("rect")
@@ -187,6 +190,9 @@ function countReceivers() {
   }
 
 }
+
+
+
 
 
 
