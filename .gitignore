@@ -2,8 +2,8 @@
 # ignore local d3 lib
 d3
 
-# practice .js script because i am noob
-practice.js
+# image files (something something copyright)
+images
 
 # atom's code completion project file
 .tern-project
