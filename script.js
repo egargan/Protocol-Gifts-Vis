@@ -3,10 +3,25 @@
 /* JS Object array of data from gifts CSV. */
 var dataset = [];
 
+var colours = ["#FFC312", "#F79F1F", "#EE5A24", "#EA2027", "#C4E538", "#A3CB38",
+               "#009432", "#006266", "#12CBC4", "#1289A7", "#0652DD", "#1B1464",
+               "#FDA7DF", "#D980FA", "#9980FA", "#5758BB", "#ED4C67", "#B53471",
+               "#833471", "#6F1E51"]
+
 
 // window.onload is called when DOM is ready -- we can only manipulate it once
 // it's ready, so any d3 dom functions must go in here.
 window.onload = function () {
+
+  // Get main's computed width
+  w = d3.select("#main").node().getBoundingClientRect().width;
+
+  // Append svg element to #main div
+  svg = d3.select("#main").append("svg")
+      .attr("height", h)
+      .attr("width", w)
+      .attr("id", "vis")
+
 
   // Look at parallelising window.onload and csv load, i.e. ready() is called
   // when both are done
@@ -19,7 +34,14 @@ window.onload = function () {
        //disp: d["Disposition"],
        value: +d["Value_USD"],
        date: d["Date"],
-       country: d["country"]
+       country: d["country"],
+
+       // 'min' versions have special characters removed so can be
+       // used as HTML classes
+
+       countrymin: (d["country"].replace(/[^a-zA-Z]/g, "")),
+       recvmin: (d["Receiver"].replace(/[^a-zA-Z]/g, "")),
+       frommin: (d["From"].replace(/[^a-zA-Z]/g, ""))
     };
   }).then(function(data) {
     dataset = data;
@@ -29,7 +51,7 @@ window.onload = function () {
 }
 
 // Default width, will be computed in ready()
-//var w = 700;
+var w = 700;
 var h = 500;
 var pad = 1;
 
@@ -49,93 +71,11 @@ var visW;
 /*  Will only be called when dom is ready, i.e. after window.onload() */
 function ready() {
 
-  // Get main's computed width
-  visW = d3.select("#main").node().getBoundingClientRect().width;
-
-  // Append svg element to #main div
-  svg = d3.select("#main").append("svg")
-      .attr("height", h)
-      .attr("width", visW)
-      .attr("id", "vis")
-
   countReceivers();
-
   setupOverview();
 
   // drawCountriesBar();
   // drawRecvBar();
-}
-
-/** Creates SVGs for horiztonal stacked bar chart visualising the number of
-gifts per country. */
-function drawCountriesBar() {
-
-  countCountries();
-
-  scaleCountryCount = d3.scaleLinear()
-                      .domain([0, (d3.sum(countryCount.values()) + ((countryCount.size()-1) * pad))])
-                      .range([0, visW]);
-
-  // Running total of x positions
-  let tot = 0;
-  let temp = 0;
-
-  var cbars = svg.append("g")
-        .attr("id", "groupCountryBars")
-        .selectAll("rect")
-        .data(countryCount.entries())
-        .enter()
-        .append("rect")
-        .attr("class", "countryBars")
-        .attr("x", function(d) {
-           temp = tot;
-           tot += scaleCountryCount(d.value + pad);
-           return temp;
-        })
-        .attr("y", h - countryBarHeight)
-        .attr("width", function(d) {
-            return scaleCountryCount(d.value);
-        })
-        .attr("height", countryBarHeight);
-
-}
-
-function drawRecvBar() {
-
-   countReceivers();
-
-   // Define receiver count mappings to be half that of svg width
-   scaleRecvCount = d3.scaleLinear()
-                    .domain([0, (d3.sum(recvCount.values()) + ((recvCount.size()-1) * pad))])
-                    .range([0, visW / 2]);
-
-   // Running total of x positions
-   let tot = 0;
-   let temp = 0;
-
-   var rbars = svg.append("g")
-          .attr("id", "groupRecvBars");
-
-   rbars.selectAll("rect")
-          .data(recvCount.entries())
-          .enter()
-          .append("rect")
-          .attr("class", "recvBars")
-          .attr("x", function(d) {
-             temp = tot;
-             tot += scaleRecvCount(d.value + pad);
-             return temp;
-          })
-          .attr("y", 40)
-          .attr("width", function(d) {
-              return scaleRecvCount(d.value);
-          })
-          .attr("height", recvBarHeight);
-
-   // TODO: could probably calculate this before bars being generated, then apply offset to x
-   rbars.attr("transform", "translate(" + ((tot - pad) / 2) + ", 0)");
-
-
 }
 
 
@@ -148,7 +88,7 @@ var smap = d3.map();
 function countCountries() {
 
   for (let c of dataset) {
-    countryCount.set(c.country, (countryCount.get(c.country) || 0) + 1)
+    countryCount.set(c.countrymin, (countryCount.get(c.countrymin) || 0) + 1)
   }
 
 }
@@ -157,7 +97,7 @@ function countCountries() {
 function countReceivers() {
 
   for (let c of dataset) {
-    recvCount.set(c.recv, (recvCount.get(c.recv) || 0) + 1)
+    recvCount.set(c.recvmin, (recvCount.get(c.recvmin) || 0) + 1)
   }
 
   // For any receiver with less than n gifts, add them to a 'misc' category
@@ -166,7 +106,7 @@ function countReceivers() {
   recvCount.set("misc", 0);
 
   recvCount.each(function(d, k) { // 'd' is map value, 'k' is map key
-     if (d < 10) {
+     if (d < 20) {
        recvCount.set("misc", recvCount.get("misc") + d);
        recvCount.remove(k);
      }
@@ -176,8 +116,8 @@ function countReceivers() {
   for (let c of dataset) {
 
     // If country is not present in outer map, then create a new one.
-    if (!smap.has(c.country)) {
-      smap.set(c.country, d3.map());
+    if (!smap.has(c.countrymin)) {
+      smap.set(c.countrymin, d3.map());
     }
 
     // smap.set(c.country, (smap.get(c.country) || d3.map()));
@@ -185,8 +125,8 @@ function countReceivers() {
     // Each country owns an inner map of Receiver -> gift count.
     // Increment this country's count for the receiver value in 'c'.
     // If receiver considered 'misc' (above), then increment the value with key "misc"
-    smap.get(c.country).set((recvCount.has(c.recv) ? c.recv : "misc"),
-          (smap.get(c.country).get(c.recv) || 0) + 1);
+    smap.get(c.countrymin).set((recvCount.has(c.recvmin) ? c.recvmin : "misc"),
+          (smap.get(c.countrymin).get(c.recvmin) || 0) + 1);
   }
 
 }

@@ -47,17 +47,8 @@ svg .xaxis line {
 }
 
 
-svg .countryBars {
-  /* shape-rendering: optimizeSpeed; */
-}
-
-svg .recvBars {
-  /* shape-rendering: optimizeSpeed; */
-}
-
-
 .node rect {
-  fill-opacity: .9;
+  /* fill-opacity: .9; */
 }
 
 .node text {
@@ -66,11 +57,7 @@ svg .recvBars {
 }
 
 .link {
-  fill: none;
-  /*stroke: #000;*/
+  /* shape-rendering: crispEdges;  */
+  /* stroke: #000; */
   stroke-opacity: .5;
-}
-
-.link:hover {
-  stroke-opacity: .8;
 }
