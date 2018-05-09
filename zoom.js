@@ -136,8 +136,9 @@ function setupZoom(country) {
      timelineg.append("text")
           .attr("text-anchor", "end")
           .attr("x", width)
-          .attr("y", (height - valueBarHeight))
+          .attr("y", (height - valueBarHeight * 1.05))
           .style("font-family","sans-serif")
+          .style("font-size", "0.9em")
           .text("Value (USD)");
 
       // Draw value axis down right hand side
