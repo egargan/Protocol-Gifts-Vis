@@ -2,8 +2,6 @@
 # ignore local d3 lib
 d3
 
-# image files (something something copyright)
-images
 
 # atom's code completion project file
 .tern-project
