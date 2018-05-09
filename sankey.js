@@ -2,13 +2,15 @@
 // This version of D3's Sankey function creates a vertically-oriented
 // diagram, adapted for this visualisation.
 
+// Much of this code is left uncommented due to the majority of it not
+// being mine (egargan) -- but any additions or modifications have been commented
+// accordingly.
+
 // Original code found at https://github.com/benlogan1981/VerticalSankey
 
 d3.sankey = function() {
 
   var sankey = {},
-      nodeWidth = 12,
-      nodePadding = 16, // was 8, needs to be much bigger. these numbers are actually overwritten in the html when we instantiate the viz!
       size = [1, 1],
       nodes = [],
       links = [];
@@ -43,13 +45,24 @@ d3.sankey = function() {
     return sankey;
   };
 
+
+  // Custom scale factor for top-most 'source' bar
+  var sourcebarsf = 0.6;
+
+  // Padding between source (top) nodes only
+  var sourcePad = 10;
+
+  // Simple getter for above variable
+  sankey.sourcepad = function() {
+      return sourcePad;
+  }
+
+
   sankey.layout = function(iterations) {
 
     computeNodeLinks();
     computeNodeValues();
 
-    // big changes here
-    // change the order and depths (y pos) won't need iterations
     computeNodeDepths();
     computeNodeBreadths(iterations);
 
@@ -64,8 +77,6 @@ d3.sankey = function() {
   };
 
 
-  // Custom scale factor for top-most 'source' bar
-  var sourcebarsf = 0.5;
 
   sankey.link = function() {
 
@@ -73,38 +84,41 @@ d3.sankey = function() {
 
     function link(d) {
 
-      // x0 = line start X
-      // y0 = line start Y
-
-      // x1 = line end X
-      // y1 = line end Y
-
-      // y2 = control point 1 (Y pos)
-      // y3 = control point 2 (Y pos)
-
       // .sy/.ty should be  .sy/.ty!
-      // this code still uses much of the same code os the original D3
+      // This code still uses much of the same code os the original D3
       // sankey lib, hence y's meaning x's, etc.
 
-      var x0 = d.source.x + d.sy, // d.sy/ty = offset within node
-          x1 = d.target.x + d.ty,
-          y0 = d.source.y + nodeWidth,
-          y1 = d.target.y,
+      // d.sy/ty = offset within node
+      var x0 = d.source.x + d.sy,            // chord begin X
+          x1 = d.target.x + d.ty,            // chord end X
+          y0 = d.source.y + nodeWidth,       // chord begin Y
+          y1 = d.target.y,                   // chord end Y
           yi = d3.interpolateNumber(y0, y1),
-          y2 = yi(curvature),
-          y3 = yi(1 - curvature);
+          y2 = yi(curvature),                // bezier control point (right side)
+          y3 = yi(1 - curvature);            // bezier control point (left side)
 
-      return "M" + x0  + "," + y0      // start (of SVG path)
-           + "C" + x0 + "," + y2      // CP1 (curve control point)
-           + " " + x1 + "," + y3      // CP2
-           + " " + x1 + "," + y1     // end
+      // Here we return an SVG description for the shape of the current chord,
+      // formed using two bezier curves (where before chords were assumed
+      // to be constant width, and drawn as lines)
 
-           + "H" + (x1 + d.dy)
+      return   "M" + x0 + "," + y0  // Left bezier start coords, from source node (top)
+             + "C" + x0 + "," + y2  // Control point (right of chord)
+             + " " + x1 + "," + y3  // Control point (left of chord)
+             + " " + x1 + "," + y1  // End coords
 
-           + "C" + (x1 + d.dy) + "," + y3
-           + " " + (x0 + d.dy * sourcebarsf) + "," + y2
-           + " " + (x0 + d.dy * sourcebarsf) + "," + y0
-           + "Z"
+             + "H" + (x1 + d.dy)    // Move right by bottom width of chord
+
+             // Here we 'chain' bezier definitions, meaning we only have to define
+             // more control points and SVG assumes we're referring to a new bezier
+
+             // Right-side bezier, drawn from bottom (target) to top (source)
+             // i.e. so invert control point ordering
+
+             + "C" + (x1 + d.dy) + "," + y3 // Control point (left
+             + " " + (x0 + d.dy * sourcebarsf) + "," + y2 // Control point (right)
+             + " " + (x0 + d.dy * sourcebarsf) + "," + y0 // End coords
+
+             + "Z" // Terminate shape definition
     }
 
     link.curvature = function(_) {
@@ -169,8 +183,8 @@ d3.sankey = function() {
 
           node.x = i
 
-          // Assuming 'node' object contains 'type', use to halve the width
-          // of the node to imply directionality
+          // Assuming 'node' object contains 'type', use to apply conditional
+          // scaling to the top 'source' bar
           if (node.type == "source") {
               node.dy = node.value * ky * sourcebarsf;
           } else {
@@ -195,15 +209,32 @@ d3.sankey = function() {
         resolveCollisions();
       }
 
+      // Counter variables, used to be able to split 'node'
+      // into source and target nodes (they're both in a single collection!)
+      var numSourceNodes = 0;
+      var numTargetNodes = 0;
+
+      nodes.forEach(function(node) {
+          if (node.type == "source") {
+              numSourceNodes++;
+          } else if (node.type == "target") {
+              numTargetNodes++;
+          }
+      })
 
       // Apply custom transformations to nodes coordinates --
       // Above code iteratively repositions the code to 'organise' the sankey
       // this loop simply scales and re-translates the results of this process
       // to achieve custom positioning, e.g. central recipient bar
-      nodes.forEach(function(node) {
+      nodes.forEach(function(node, i) {
 
           if (node.type == "source") {
-              node.x -= w * (sourcebarsf * 0.5);
+
+              // Reposition each node according to padding and scale factor
+              // Referencing width defined in script.js ... disgraceful
+              node.x -= (ovw * ((sourcebarsf * sourcebarsf) / 2)
+                      - (i - numTargetNodes) * sourcePad)
+                      + sourcePad * (numSourceNodes - 1);
           }
       })
 
@@ -278,8 +309,6 @@ d3.sankey = function() {
 
       function ascendingDepth(a, b) {
           return a.y - b.y; // flows go up
-          //return b.x - a.x; // flows go down
-          //return a.x - b.x;
       }
   }
 

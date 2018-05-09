@@ -12,19 +12,19 @@
 
   <link rel="stylesheet" href="style.css" type="text/css"/>
 
-  <script type="text/javascript" src="d3/d3.js"></script>
-  <!-- <script type="text/javascript" src="d3/d3-sankey.js"></script> -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
   <script type="text/javascript" src="sankey.js"></script>
 
   <script type="text/javascript" src="script.js"></script>
   <script type="text/javascript" src="overview.js"></script>
+  <script type="text/javascript" src="zoom.js"></script>
 
 </head>
 
 <body>
 
   <header>
-    <p>28 April, 2018</p>
+    <p>8 April, 2018</p>
     <a href="https://github.com/egargan">Edward Gargan</a>
   </header>
 
@@ -33,16 +33,28 @@
   </div>
 
   <div id="desc">
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-         sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-         nisi ut aliquip ex ea commodo consequat.
+      <p>
+        Gift-giving between foreign diplomats and the U.S. president and white
+        house staff is a surprisingly common event.
+        The gifts that are 'formally' received are officially documented by the
+        U.S. Department of State's 'Gift Protocol Unit',
+        whose records currently span 2002 to 2016.
+        From the state department's website,
+       </p>
+       <p style="padding-left: 2em">
+        "The Gift Office within the Office of the Chief of Protocol receives all
+        diplomatic gifts on behalf of White House and Department of State officials
+        and maintains records pertaining to diplomatic gifts. This includes all
+        diplomatic gifts received by the President, Vice President, and Secretary
+        of State and their spouses"
        </p>
        <p>
-         Duis aute irure dolor in reprehenderit in voluptate velit esse
-         cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-        cupidatat non proident, sunt in culpa qui officia deserunt mollit
-         anim id est laborum.
+         Above is my attempt at visualising the data that the
+         Gift Office have recorded over the years. The visualisation is a
+         sort-of Sankey diagram, whose connections represent how generous
+         other countries have been in their visits to the US.
+         The bottom row of the diagram represents the countries -- click on one
+         to see a detailed timeline of that country's gift-liness!
        </p>
   </div>
 

@@ -1,26 +1,61 @@
 
 
-/* JS Object array of data from gifts CSV. */
+// JS Object array of data from gifts CSV.
 var dataset = [];
 
+// Selection of colours that the country nodes choose from
 var colours = ["#FFC312", "#F79F1F", "#EE5A24", "#EA2027", "#C4E538", "#A3CB38",
-               "#009432", "#006266", "#12CBC4", "#1289A7", "#0652DD", "#1B1464",
-               "#FDA7DF", "#D980FA", "#9980FA", "#5758BB", "#ED4C67", "#B53471",
-               "#833471", "#6F1E51"]
+               "#009432", "#006266","#FDA7DF", "#D980FA", "#9980FA", "#5758BB",
+               "#ED4C67", "#B53471", "#833471", "#6F1E51"]
 
+// Hard coded colour values -- horribly inextensible but it will have to do :/
+var blues = {"PresidentBarackObama": "#1E3888",
+             "FirstFamilyObamas" : "#00A6FB",
+             "FirstLadyLauraBush" : "#016FB9",
+             "FirstLadyMichelleObama" : "#0098CD",
+             "miscWHStaff" : "#5DA9E9",
+             "PresidentGeorgeBush" : "#1D3461"}
+
+
+// Default dimensions for overview SVG
+var ovw = 700;
+var ovh = 400;
+
+// Default dimensions for zoom SVG
+var zw = 700;
+var zh = 400;
+
+// Above widths overwritten in window.onload() below,
+
+
+// overviewContainer element to contain vis
+var overviewContainer, zoomContainer;
 
 // window.onload is called when DOM is ready -- we can only manipulate it once
 // it's ready, so any d3 dom functions must go in here.
 window.onload = function () {
 
   // Get main's computed width
-  w = d3.select("#main").node().getBoundingClientRect().width;
+  ovw = zw =  d3.select("#main").node().getBoundingClientRect().width;
 
-  // Append svg element to #main div
-  svg = d3.select("#main").append("svg")
-      .attr("height", h)
-      .attr("width", w)
-      .attr("id", "vis")
+  // Append overviewContainer element to #main div
+  overviewContainer = d3.select("#main").append("svg")
+      .attr("z-index", "1")
+      .attr("position", "absolute")
+      .attr("top", 0)
+      .attr("left", 0)
+      .attr("height", ovh)
+      .attr("width", ovw)
+      .attr("id", "overview")
+
+  zoomContainer = d3.select("#main").append("svg")
+      .attr("z-index", "-1")
+      .attr("position", "absolute")
+      .attr("top", 0)
+      .attr("left", 0)
+      .attr("height", zh)
+      .attr("width", zw)
+      .attr("id", "zoom")
 
 
   // Look at parallelising window.onload and csv load, i.e. ready() is called
@@ -50,65 +85,63 @@ window.onload = function () {
 
 }
 
-// Default width, will be computed in ready()
-var w = 700;
-var h = 500;
-var pad = 1;
-
-/** Height of the horizontal country gift count bar. */
-var countryBarHeight = 40;
-var recvBarHeight = 25;
-
-// Chart scales
-var scaleCountryCount, scaleRecvCount;
-
-var svg;
-
-/** Width of visualisation SVG. */
-var visW;
-
-
 /*  Will only be called when dom is ready, i.e. after window.onload() */
 function ready() {
 
   countReceivers();
-  setupOverview();
-
-  // drawCountriesBar();
-  // drawRecvBar();
-}
-
-
-var countryCount = d3.map();
-var recvCount = d3.map();
-
-var smap = d3.map();
-
-/** Populates map with the number of per-country gifts. */
-function countCountries() {
-
-  for (let c of dataset) {
-    countryCount.set(c.countrymin, (countryCount.get(c.countrymin) || 0) + 1)
-  }
+  setupOverview(overviewContainer);
 
 }
 
+// Wipes any previous 'zoomed' country, and displays the given country's gifts
+// data in the separate 'zoom' svg.
+function zoomCountry(country) {
+
+  zoomContainer
+     .transition()
+     .duration(100)
+     .style("opacity", 0)
+
+     .on("end", function(d) {
+
+         zoomContainer.selectAll("*").remove();
+         setupZoom(country);
+         zoomContainer.style("opacity", 1)
+
+     })
+
+}
+
+
+
+// A map of all of the dataset's receivers, and the amount of gifts they received
+var recvGiftCount = d3.map();
+
+// A 'map of maps', where each outer map entry represents a single country,
+// which holds its own map of the receivers it gave gifts to, and how many
+var countryRecvCounts = d3.map();
 
 function countReceivers() {
 
+  // Iterate over dataset and count gifts
   for (let c of dataset) {
-    recvCount.set(c.recvmin, (recvCount.get(c.recvmin) || 0) + 1)
+    recvGiftCount.set(c.recvmin, (recvGiftCount.get(c.recvmin) || 0) + 1)
   }
 
   // For any receiver with less than n gifts, add them to a 'misc' category
   // -- there are a good few unique receivers, partly due to the dataset
-  // having fucking loads of typos. Will hopefully clean before deadline.
-  recvCount.set("misc", 0);
+  // having loads of typos! Will hopefully clean before deadline.
+  recvGiftCount.set("miscWHStaff", 0);
 
-  recvCount.each(function(d, k) { // 'd' is map value, 'k' is map key
-     if (d < 20) {
-       recvCount.set("misc", recvCount.get("misc") + d);
-       recvCount.remove(k);
+  recvGiftCount.each(function(d, k) { // 'd' is map value, 'k' is map key
+
+     // threshold minimum gift count so receiver nodes aren't too small
+     if (d < 100) {
+
+       // Add any misc. receivers' counts to the total misc count,
+       // and remove from map.
+       recvGiftCount.set("miscWHStaff", recvGiftCount.get("miscWHStaff") + d);
+       recvGiftCount.remove(k);
      }
   })
 
@@ -116,17 +149,15 @@ function countReceivers() {
   for (let c of dataset) {
 
     // If country is not present in outer map, then create a new one.
-    if (!smap.has(c.countrymin)) {
-      smap.set(c.countrymin, d3.map());
+    if (!countryRecvCounts.has(c.countrymin)) {
+      countryRecvCounts.set(c.countrymin, d3.map());
     }
-
-    // smap.set(c.country, (smap.get(c.country) || d3.map()));
 
     // Each country owns an inner map of Receiver -> gift count.
     // Increment this country's count for the receiver value in 'c'.
     // If receiver considered 'misc' (above), then increment the value with key "misc"
-    smap.get(c.countrymin).set((recvCount.has(c.recvmin) ? c.recvmin : "misc"),
-          (smap.get(c.countrymin).get(c.recvmin) || 0) + 1);
+    countryRecvCounts.get(c.countrymin).set((recvGiftCount.has(c.recvmin) ? c.recvmin : "miscWHStaff"),
+          (countryRecvCounts.get(c.countrymin).get(c.recvmin) || 0) + 1);
   }
 
 }
